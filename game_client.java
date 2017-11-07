@@ -17,6 +17,8 @@ public class Game_Client{
     PrintWriter serverOutput = null;
 
     Scanner userEntry = new Scanner(System.in);
+    boolean nameAccepted = false;
+    String username = "";
 
 
     try {
@@ -44,13 +46,40 @@ public class Game_Client{
             serverOutput = new PrintWriter(server.getOutputStream(), true);
 
             System.out.println("Connection with " + serverName + " has been established");
-            System.out.println("Please enter a username");
-            // stuff
 
+
+
+            System.out.println("Please enter a username...");
+            while(nameAccepted == false) {
+              username = userEntry.nextLine();
+              serverOutput.println(username);
+              if(serverInput.next().equals("ACCEPTED")){
+                System.out.println("Your username has been accepted. You are: " + username);
+                nameAccepted = true;
+              }
+
+              else if (serverInput.next().equals("TAKEN")) {
+                System.out.println("This username has already been taken. Please enter another");
+                continue;
+              }
+
+              else {
+                System.out.println("An error has occurred. Please enter another username");
+                continue;
+              }
+            }
+            System.out.println("Entering game...");
+            serverOutput.println(PORT);
+            ServerSocket welcomeSocket = new ServerSocket(PORT);
+            Socket dataSocket = welcomeSocket.accept();
+            InputStream inStream = dataSocket.getInputStream;
+            OutputStream outStream = dataSocket.getOutputStream;
 
             // since we don't have "commands" like in the last project
             // we will want to do a big while loop that the game stuff runs in instead
             do {
+
+
 
 
             }
