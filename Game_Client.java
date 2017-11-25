@@ -73,6 +73,8 @@ public class Game_Client{
                             continue;
                         }
                     }
+                    
+                    // TODO: User needs to wait until the server sends a card list for first round
 
                     // name stuff is done, user
                     System.out.println("Entering game...");
