@@ -40,7 +40,7 @@ public class Game_Client{
             }
             serverName = tokens.nextToken();
             serverPort = Integer.parseInt(tokens.nextToken());
-            server = new Socket(serverName, serverPort);
+            server = new Socket(localhost, 1236);
 
             serverInput = new Scanner(server.getInputStream());
             serverOutput = new PrintWriter(server.getOutputStream(), true);
@@ -50,16 +50,21 @@ public class Game_Client{
 
 
             System.out.println("Please enter a username...");
+            // while we haven't had a name accepted by the server
             while(nameAccepted == false) {
+              // get input
               username = userEntry.nextLine();
+              // send to server
               serverOutput.println(username);
+              
+              // check available
               if(serverInput.next().equals("ACCEPTED")){
                 System.out.println("Your username has been accepted. You are: " + username);
                 nameAccepted = true;
               }
 
               else if (serverInput.next().equals("TAKEN")) {
-                System.out.println("This username has already been taken. Please enter another");
+                System.out.println("This username has already been taken. Please enter another username");
                 continue;
               }
 
@@ -68,12 +73,14 @@ public class Game_Client{
                 continue;
               }
             }
+
+            // name stuff is done, user
             System.out.println("Entering game...");
             serverOutput.println(PORT);
             ServerSocket welcomeSocket = new ServerSocket(PORT);
             Socket dataSocket = welcomeSocket.accept();
-            InputStream inStream = dataSocket.getInputStream;
-            OutputStream outStream = dataSocket.getOutputStream;
+            InputStream inStream = dataSocket.getInputStream();
+            OutputStream outStream = dataSocket.getOutputStream();
 
             // since we don't have "commands" like in the last project
             // we will want to do a big while loop that the game stuff runs in instead
@@ -81,12 +88,11 @@ public class Game_Client{
 
 
 
-
             }
           }
 
         }
-      } while ();
+      } while (!userEntry.nextLine().equalsIgnoreCase('QUIT'));
     }
   }
 }
