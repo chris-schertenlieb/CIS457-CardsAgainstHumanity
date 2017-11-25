@@ -2,145 +2,196 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class game_server {
-  private static ServerSocket welcomeSocket;
-  private static final int PORT = 1234;
-  public int playerCount = 0;
-  ArrayList playerList = new ArrayList();
-  ArrayList whiteDeck = new ArrayList();
-  ArrayList blackDeck = new ArrayList();
-  ArrayList whiteUsed = new ArrayList();
-  ArrayList blackUsed = new ArrayList();
+public class Game_Server {
+    private static ServerSocket welcomeSocket;
+    private static final int PORT = 1234;
+    ArrayList playerList = new ArrayList();
+    ArrayList whiteDeck = new ArrayList();
+    ArrayList blackDeck = new ArrayList();
+    ArrayList whiteUsed = new ArrayList();
+    ArrayList blackUsed = new ArrayList();  
+    private static final int MAX_NUMBER_OF_PLAYERS = 4;
+
+    //shared objects
+    private String[] playerNames;
+    private String[] blackCardSelected;
+
+    private int threadCount = -1;
 
 
-  public void main(String[] args) throws IOException
-  {
-    String currentBlackCard = "";
-    ArrayList submittedWhiteCards = new ArrayList();
-    Random r = new Random();
-    int random = -1;
-    int cardTzar = 1;
 
-    try
+    public void main(String[] args) throws IOException
     {
-      welcomeSocket = new ServerSocket(PORT);
-    }
-    catch (IOException ioEx)
-    {
-      System.out.println("Unable to set up port!");
-      System.exit(1);
-    }
+        //initialize shared objects
+        playerNames = new String[MAX_NUMBER_OF_PLAYERS];
+        blackCardSelected = new String[MAX_NUMBER_OF_PLAYERS];
 
-    // primary loop
-    while(true){
-      // either we have enough players or we don't
-      while(playerCount<4)
-      {
-        System.out.println("Waiting for new players...");
-        Socket client = welcomeSocket.accept();
-        System.out.println("New Player Accepted");
-        ClientHandler handler = new ClientHandler(client);
-        playerCount++;
-        handler.start();
-      }
+        String currentBlackCard = "";
+        ArrayList submittedWhiteCards = new ArrayList();
+        Random r = new Random();
+        int random = -1;
+        int cardTzar = 1;
+        boolean finished;
 
-      // yay we have enough people let's get started
-      while(playerCount==4)
-      {
 
-        // TODO deal out first hand
-
-        // declare the card tzar
-        System.out.println(playerList.indexOf(cardTzar-1) + " is the Card Tzar this turn");
-
-        // grab a black card
-        random = r.nextInt(blackDeck.size() -1);
-        currentBlackCard = (blackDeck.get(random)).toString();
-
-        // TODO send black card to each Thread
-        // TODO receive submissions from each thread
-
-        // chceck who the card tzar is
-        if (cardTzar+1 > 4){
-          cardTzar = 1;
+        try
+        {
+            welcomeSocket = new ServerSocket(PORT);
         }
-        else cardTzar++;
+        catch (IOException ioEx)
+        {
+            System.out.println("Unable to set up port!");
+            System.exit(1);
+        }
 
-        // TODO send submissions out for judging
+        int playerCount = 0;
 
-        // TODO receive judgement
+        // primary loop
+        while(true){
+            // either we have enough players or we don't
+            while(playerCount<MAX_NUMBER_OF_PLAYERS)
+            {
+                System.out.println("Waiting for new players...");
+                Socket client = welcomeSocket.accept();
+                System.out.println("New Player Accepted");
+                ClientHandler handler = new ClientHandler(client);
+                playerCount++;
+                handler.start();
+            }
 
-        // TODO send results out
+            // yay we have enough people let's get started
+            while(playerCount == MAX_NUMBER_OF_PLAYERS)
+            {
+                //this block loops until every user has successfully negotiated username
+                finished = true;
+                do {
+                    for (int i = 0; i < playerNames.length; i++)
+                    {
+                        if (playerNames[i] == null || playerNames[i].isEmpty())
+                        {
+                            finished = false;
+                            break;
+                        }
+                    }
+                } while (finished);
 
-      }
-      System.out.println("loop d loop");
+                // TODO deal out first hand
 
-      } // </big while loop>
-      System.exit(1);
+                // declare the card tzar
+                System.out.println(playerList.indexOf(cardTzar-1) + " is the Card Tzar this turn");
+
+                // grab a black card
+                random = r.nextInt(blackDeck.size() -1);
+                currentBlackCard = (blackDeck.get(random)).toString();
+
+                // TODO send black card to each Thread
+                // TODO receive submissions from each thread
+
+                // chceck who the card tzar is
+                if (cardTzar+1 > 4){
+                    cardTzar = 1;
+                }
+                else cardTzar++;
+
+                // TODO send submissions out for judging
+
+                // TODO receive judgement
+
+                // TODO send results out
+
+            }
+            System.out.println("loop d loop");
+
+        } // </big while loop>
+//        System.exit(1);
     } // </main>
-} // </game_server>
 
 
 
-class ClientHandler extends Thread
-{
-    private Socket client;
-    private Scanner input;
-    private PrintWriter output;
-    private int dataConnPort;
-    private String command;
-    private String received;
-    private int dataInputPort = 1236;
-    private String name;
-
-
-    public ClientHandler(Socket socket)
+    class ClientHandler extends Thread
     {
-        client = socket;
-        input = new Scanner(client.getInputStream());
-        output = new PrintWriter(client.getOutputStream(), true);
-    }
+        private Socket client;
+        private Scanner input;
+        private PrintWriter output;
+        private int dataConnPort;
+        private String command;
+        private String received;
+        private int dataInputPort = 1236;
+        private String name;
+        private int myThreadNumber;
 
-    public void run()
-    {
-      try
-      {
 
-        boolean nameCheck = false;
-          /* get input/output streams from the client socket
-           * These represent the i/o for the persistent command connection */
+        public ClientHandler(Socket socket)
+        {
+            myThreadNumber = getMyThreadNumber();
 
-          System.out.println("Getting name for new user...");
-          while(nameCheck == false)
-          {
+            client = socket;
+
+            try {
+                /* get input/output streams from the client socket
+                 * These represent the i/o for the persistent command connection */
+                input = new Scanner(client.getInputStream());
+                output = new PrintWriter(client.getOutputStream(), true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void run()
+        {
+            //negotiate username
+            System.out.println("Getting name for new user...");
+
             name = input.nextLine();
 
-            for (int i = 0; i < playerList.length(); i++){
-              if(name.equalsIgnoreCase(playerList.get(i)))
-              {
-                // we found this name on the list, so it's taken
-                // nameCheck is still false
-                // send a message to the user and break
-                // out of the loop to get a new string from the client
+            while (!usernameAccepted(name, myThreadNumber))
+            {
                 output.println("TAKEN");
-
-                break; // continue? We want to starrt the while loop at the beginning
-              }
+                name = input.nextLine();
             }
-            // in this case we didn't find the name, so it must not be taken.
-            // add it to the list of names and
-            // set nameCheck to true to exit the loop and
-            // send a message to the client
-            playerList.add(name);
-            nameCheck = true;
+
             output.println("ACCEPTED");
             System.out.println("New Player " + name + " has joined");
-            // FIXME print this message out to all other users
-          }
-      }
-      catch(IOException ioEx)
-      {
-          ioEx.printStackTrace();
-      }
+
+            // TODO print this message out to all other users
+        }
+
     }
-}
+
+    /******
+     * Threadsafe method returns a unique int which is used by each 
+     *   process to index shared object arrays to change values
+     * @return the thread's unique number
+     */
+    private synchronized int getMyThreadNumber()
+    {
+        threadCount++;
+        return threadCount;
+    }
+
+    /*****
+     * If a submitted username is not taken, it needs to be immediately
+     *   written to memory in a threadsafe function so that another
+     *   user cannot take it
+     * @param userName
+     * @return
+     */
+    private synchronized boolean usernameAccepted(String userName, int threadNumber)
+    {
+        for (int i = 0; i < playerNames.length; i++)
+        {
+            if (playerNames[i] != null)
+            {
+                if (playerNames[i].equalsIgnoreCase(userName))
+                    //name has been taken; return false
+                    return false;
+            }
+        }
+
+        //name has not been taken; write in name; return true
+        playerNames[threadNumber] = userName;
+        return true;
+    }
+
+} // </game_server>
+
