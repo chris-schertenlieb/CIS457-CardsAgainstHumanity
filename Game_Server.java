@@ -9,7 +9,7 @@ public class Game_Server {
     ArrayList whiteDeck = new ArrayList();
     ArrayList blackDeck = new ArrayList();
     ArrayList whiteUsed = new ArrayList();
-    ArrayList blackUsed = new ArrayList();  
+    ArrayList blackUsed = new ArrayList();
     private static final int MAX_NUMBER_OF_PLAYERS = 4;
     private static final int SIZE_OF_HAND = 10;
     private String[][] playerHands;
@@ -44,7 +44,7 @@ public class Game_Server {
         done = new Boolean[MAX_NUMBER_OF_PLAYERS];
         gameOver = false;
 
-        
+
         currentBlackCard = "";
         r = new Random();
         boolean finished;
@@ -76,6 +76,7 @@ public class Game_Server {
             }
 
             // yay we have enough people let's get started
+            System.out.println("Starting game...");
             while(playerCount == MAX_NUMBER_OF_PLAYERS)
             {
                 //this block loops until every user has successfully negotiated username
@@ -90,10 +91,11 @@ public class Game_Server {
                         }
                     }
                 } while (finished);
+                System.out.println("Usernames registered");
 
                 //initialize the first round
                 //TODO: set pointsAndStats object
-                
+
                 // grab a black card
                 selectNewBlackCard();
 
@@ -104,64 +106,64 @@ public class Game_Server {
                     {
                         String cardForPlayer = getWhiteCard();
                         playerHands[player][card] = cardForPlayer;
-                    }                    
+                    }
                     player++;
                 } while (player < MAX_NUMBER_OF_PLAYERS);
-                
+
                 // tzar is initialized to -1 for first round increment
                 cardTzar = -1;
-                
+
                 do {  //this part can loop for all normal rounds
-                    
+
                     // threads may send each player their hand, their tzar status, and the white card up
                     unleashThreads();
                     waitForThreads();  //wait for threads to send their player their white cards
-                    
+
                     // white cards have been sent
                     // time to determine the first tzar
                     cardTzar++;
                     if (cardTzar == MAX_NUMBER_OF_PLAYERS)
                         cardTzar = 0;
                     System.out.println(playerNames[cardTzar] + " is the Card Tzar this turn");
-                    
+
                     unleashThreads();
                     waitForThreads();  //wait for threads to notify players if they are the tzar
-    
+
                     // players have been notified if they're the tzar
                     // time to have threads send the black card
                     unleashThreads();
                     waitForThreads();  //wait for threads to send the black card to their players
-    
+
                     // players have the black card
                     // main doesn't need to do anything now; just wait for players to pick their white cards
                     unleashThreads();
                     waitForThreads();  //wait for threads to get selected white cards from their players
-    
+
                     // all white cards have been received
                     // now threads need to send the selected white cards to their users
                     unleashThreads();
                     waitForThreads();  //wait for threads to send the selected white cards out
-    
+
                     // the list of selected white cards has been sent
                     // now wait for the tzar to make a selection
                     unleashThreads();
                     waitForThreads();  //wait for tzar to make a selection
-                    
+
                     // tzar has selected a winner
                     //TODO: respond to tzar selection; update pointsAndStats
-                    // TODO: if it's the end of the game; gameOver = true; 
-                    
+                    // TODO: if it's the end of the game; gameOver = true;
+
                     // it's the end of the round; have the threads send the winner and pointsAndStats to each user
                     unleashThreads();
                     waitForThreads();  //wait for all users to get the result
-                    
+
                     // all users have gotten the result
                     if (!gameOver)
                     {
                         /* intitialize a new round */
                         // get a new black card
                         selectNewBlackCard();
-                        
+
                         // replace the used white card in everyone's hand
                         for (player = 0; player < MAX_NUMBER_OF_PLAYERS; player++)
                         {
@@ -174,11 +176,11 @@ public class Game_Server {
                             }
                             playerHands[player][cardIndex] = getWhiteCard();
                         }
-                        
-                        
+
+
                     }
                 } while(!gameOver);
-                
+
                 //TODO: Handle game over situation
             }
             System.out.println("loop d loop");
@@ -230,7 +232,7 @@ public class Game_Server {
                 if (done[thread] == false)
                     somebodyIsntDone = true;
             }
-        } while (somebodyIsntDone);        
+        } while (somebodyIsntDone);
     }
 
 
@@ -244,7 +246,7 @@ public class Game_Server {
             done[thread] = false;
             waiting[thread] = false;
         }
-    }    
+    }
 
 
 
@@ -274,12 +276,12 @@ public class Game_Server {
                  * These represent the i/o for the persistent command connection */
                 input = new Scanner(client.getInputStream());
                 output = new PrintWriter(client.getOutputStream(), true);
-                
-                // give inputs and outputs to the respective shared objects 
+
+                // give inputs and outputs to the respective shared objects
                 //    so master server can access them
                 clientInputs[myThreadNumber] = input;
                 clientOutputs[myThreadNumber] = output;
-                
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -302,40 +304,40 @@ public class Game_Server {
             System.out.println("New Player " + name + " has joined");
 
             /* I think this whole thing loops for every hand..... */
-            
+
             while (!gameOver) {
-                
+
                 // wait for main to finish initializing the round
                 waitForMain();
-                
+
                 // send out the list of cards
                 sendObject(playerHands[myThreadNumber]);
                 done[myThreadNumber] = true;
-                
+
                 // wait for server to determine card tzar
                 waitForMain();
-                
+
                 // send boolean to client to tell them if they're the card tzar
                 sendObject(myThreadNumber == cardTzar);
                 done[myThreadNumber] = true;
-                
+
                 // wait for main to check if everyone is ready
                 waitForMain();
-                
+
                 // send black card to user
                 sendObject(currentBlackCard);
                 done[myThreadNumber] = true;
-                
+
                 // wait for main to check if everyone is ready
                 waitForMain();
-                
+
                 // send selected white cards to the user
                 sendObject(whiteCardsSelected);
                 done[myThreadNumber] = true;
-                
+
                 // wait for main to check that everyone is done
                 waitForMain();
-                
+
                 // wait for user input to pick white card they want to play
                 if (myThreadNumber != cardTzar) {
                     whiteCardsSelected[myThreadNumber] = input.nextLine();
@@ -345,14 +347,14 @@ public class Game_Server {
                     whiteCardsSelected[myThreadNumber] = "";
                 }
                 done[myThreadNumber] = true;
-                
+
                 // wait for main to read everyone's selection
                 waitForMain();
-                
+
                 // send selected cards to everyone
                 sendObject(whiteCardsSelected);
                 done[myThreadNumber] = true;
-                
+
                 // wait for main to confirm that everyone has the card list
                 waitForMain();
 
@@ -360,18 +362,18 @@ public class Game_Server {
                 if (myThreadNumber == cardTzar)
                     winningWhiteCard = input.nextLine();
                 done[myThreadNumber] = true;
-                
+
                 // wait for main to confirm winning card
                 waitForMain();
-                
+
                 // send winner to everyone and updated point totals
                 sendObject(pointsAndStats);
                 done[myThreadNumber] = true;
             }
-            
+
             //TODO: cleanup for game over situation
 
-            
+
         }
 
         /****
@@ -388,9 +390,9 @@ public class Game_Server {
                 outputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
-            }            
+            }
         }
-        
+
         /****
          * small helper that waits for main to send signal
          *   then resets signal for next wait
@@ -398,7 +400,7 @@ public class Game_Server {
         private void waitForMain()
         {
             while(waiting[myThreadNumber]){};
-            
+
             // prep for next wait
             waiting[myThreadNumber] = true;
         }
@@ -406,7 +408,7 @@ public class Game_Server {
     }
 
     /******
-     * Threadsafe method returns a unique int which is used by each 
+     * Threadsafe method returns a unique int which is used by each
      *   process to index shared object arrays to change values
      * @return the thread's unique number
      */
@@ -441,4 +443,3 @@ public class Game_Server {
     }
 
 } // </game_server>
-

@@ -12,6 +12,7 @@ public class Game_Client{
         Socket server = null;
         String message, command, response, serverName = "";
         int serverPort;
+        int MAXIMUM_HAND_SIZE = 7;
 
         Scanner serverInput = null;
         PrintWriter serverOutput = null;
@@ -73,7 +74,7 @@ public class Game_Client{
                             continue;
                         }
                     }
-                    
+
                     // TODO: User needs to wait until the server sends a card list for first round
 
                     // name stuff is done, user
@@ -84,9 +85,53 @@ public class Game_Client{
                     InputStream inStream = dataSocket.getInputStream();
                     OutputStream outStream = dataSocket.getOutputStream();
 
+                    String[] hand;
+                    String currentBlackCard;
+                    String cardTzar;
+                    int cardSelection = 0;
+                    ObjectInputStream objectIn = new ObjectInputStream(inStream);
+                    Scanner scanIn = new Scanner(inStream);
+
                     // since we don't have "commands" like in the last project
                     // we will want to do a big while loop that the game stuff runs in instead
                     do {
+                      /* read in and print players hand */
+                      System.out.println("Getting your hand...");
+                      hand = (String[])objectIn.readObject();
+                      int num = 0;
+                      System.out.println("Your hand: ");
+                      for(int i=0; i<MAXIMUM_HAND_SIZE; i++){
+                        num = i+1;
+                        System.out.println(num+". " + hand[i]);
+                      }
+
+                      /* conditional for if you are tzar or a player */
+                      System.out.println("Getting card tzar...");
+                      cardTzar = scanIn.nextLine();
+
+                      /* if you are card tzar */
+                      if(cardTzar.equals(username)){
+                        System.out.println("You are the card tzar this turn!");
+                        System.out.println("Getting your black card...");
+                        currentBlackCard = scanIn.nextLine();
+                        System.out.println(currentBlackCard);
+                        System.out.println("Awaiting submissions...");
+
+                      }
+                      /* you are playing this turn */
+                      else{
+                        System.out.println(cardTzar + " is the card tzar this turn");
+                        System.out.print("Getting the black card for this turn...");
+                        currentBlackCard = scanIn.nextLine();
+                        System.out.println(currentBlackCard);
+
+                        while(cardSelection<=0 || cardSelection>7){
+                            System.out.println("Submit your white card now");
+                            cardSelection = userEntry.nextInt();
+                        }
+                      }
+
+
 
 
 
