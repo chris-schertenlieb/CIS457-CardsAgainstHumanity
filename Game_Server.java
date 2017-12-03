@@ -30,9 +30,17 @@ public class Game_Server {
 
     private int threadCount = -1;
 
+	public static void main(String[] args)
+    {
+        try {
+            Game_Server game_Server = new Game_Server();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
-
-    public void main(String[] args) throws IOException
+    public Game_Server() throws IOException
     {
         //initialize shared objects
         playerNames = new String[MAX_NUMBER_OF_PLAYERS];
@@ -80,22 +88,20 @@ public class Game_Server {
             while(playerCount == MAX_NUMBER_OF_PLAYERS)
             {
                 //this block loops until every user has successfully negotiated username
-                finished = true;
+                finished = false;
+				int count = 0;
                 do {
-                    for (int i = 0; i < playerNames.length; i++)
-                    {
-                        if (playerNames[i] == null || playerNames[i].isEmpty())
-                        {
-                            finished = false;
-                            break;
-                        }
-                    }
-                } while (finished);
-                System.out.println("Usernames registered");
+					finished = true;
+					for(int i = 0; i < MAX_NUMBER_OF_PLAYERS; i++) {
+						if(playerNames[i] == null) {
+							finished = false;
+						}
+					}
+                } while (!finished);
 
                 //initialize the first round
                 //TODO: set pointsAndStats object
-
+                
                 // grab a black card
                 selectNewBlackCard();
 
@@ -106,64 +112,64 @@ public class Game_Server {
                     {
                         String cardForPlayer = getWhiteCard();
                         playerHands[player][card] = cardForPlayer;
-                    }
+                    }                    
                     player++;
                 } while (player < MAX_NUMBER_OF_PLAYERS);
-
+                
                 // tzar is initialized to -1 for first round increment
                 cardTzar = -1;
-
+                
                 do {  //this part can loop for all normal rounds
-
+                    
                     // threads may send each player their hand, their tzar status, and the white card up
                     unleashThreads();
                     waitForThreads();  //wait for threads to send their player their white cards
-
+                    
                     // white cards have been sent
                     // time to determine the first tzar
                     cardTzar++;
                     if (cardTzar == MAX_NUMBER_OF_PLAYERS)
                         cardTzar = 0;
                     System.out.println(playerNames[cardTzar] + " is the Card Tzar this turn");
-
+                    
                     unleashThreads();
                     waitForThreads();  //wait for threads to notify players if they are the tzar
-
+    
                     // players have been notified if they're the tzar
                     // time to have threads send the black card
                     unleashThreads();
                     waitForThreads();  //wait for threads to send the black card to their players
-
+    
                     // players have the black card
                     // main doesn't need to do anything now; just wait for players to pick their white cards
                     unleashThreads();
                     waitForThreads();  //wait for threads to get selected white cards from their players
-
+    
                     // all white cards have been received
                     // now threads need to send the selected white cards to their users
                     unleashThreads();
                     waitForThreads();  //wait for threads to send the selected white cards out
-
+    
                     // the list of selected white cards has been sent
                     // now wait for the tzar to make a selection
                     unleashThreads();
                     waitForThreads();  //wait for tzar to make a selection
-
+                    
                     // tzar has selected a winner
                     //TODO: respond to tzar selection; update pointsAndStats
-                    // TODO: if it's the end of the game; gameOver = true;
-
+                    // TODO: if it's the end of the game; gameOver = true; 
+                    
                     // it's the end of the round; have the threads send the winner and pointsAndStats to each user
                     unleashThreads();
                     waitForThreads();  //wait for all users to get the result
-
+                    
                     // all users have gotten the result
                     if (!gameOver)
                     {
                         /* intitialize a new round */
                         // get a new black card
                         selectNewBlackCard();
-
+                        
                         // replace the used white card in everyone's hand
                         for (player = 0; player < MAX_NUMBER_OF_PLAYERS; player++)
                         {
@@ -176,11 +182,11 @@ public class Game_Server {
                             }
                             playerHands[player][cardIndex] = getWhiteCard();
                         }
-
-
+                        
+                        
                     }
                 } while(!gameOver);
-
+                
                 //TODO: Handle game over situation
             }
             System.out.println("loop d loop");

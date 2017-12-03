@@ -11,7 +11,7 @@ public class Game_Client{
     {
         Socket server = null;
         String message, command, response, serverName = "";
-        int serverPort;
+        int clientPort;
         int MAXIMUM_HAND_SIZE = 7;
 
         Scanner serverInput = null;
@@ -40,8 +40,8 @@ public class Game_Client{
                         continue;
                     }
                     serverName = tokens.nextToken();
-                    serverPort = Integer.parseInt(tokens.nextToken());
-                    server = new Socket("localhost", 1236);
+                    clientPort = Integer.parseInt(tokens.nextToken());
+                    server = new Socket("localhost", 1234);
 
                     serverInput = new Scanner(server.getInputStream());
                     serverOutput = new PrintWriter(server.getOutputStream(), true);
@@ -49,8 +49,7 @@ public class Game_Client{
                     System.out.println("Connection with " + serverName + " has been established");
 
 
-
-                    System.out.println("Please enter a username...");
+					System.out.println("Please enter a username...");
                     // while we haven't had a name accepted by the server
                     while(nameAccepted == false) {
                         // get input
@@ -59,12 +58,13 @@ public class Game_Client{
                         serverOutput.println(username);
 
                         // check available
-                        if(serverInput.next().equals("ACCEPTED")){
+                        String serverResponse = serverInput.next();
+                        if(serverResponse.equals("ACCEPTED")){
                             System.out.println("Your username has been accepted. You are: " + username);
                             nameAccepted = true;
                         }
 
-                        else if (serverInput.next().equals("TAKEN")) {
+                        else if (serverResponse.equals("TAKEN")) {
                             System.out.println("This username has already been taken. Please enter another username");
                             continue;
                         }
@@ -76,11 +76,14 @@ public class Game_Client{
                     }
 
                     // TODO: User needs to wait until the server sends a card list for first round
-
+					System.out.println("Test");
+					
                     // name stuff is done, user
                     System.out.println("Entering game...");
-                    serverOutput.println(PORT);
-                    ServerSocket welcomeSocket = new ServerSocket(PORT);
+                    serverOutput.println(clientPort);
+					System.out.println("Test2");
+                    ServerSocket welcomeSocket = new ServerSocket(clientPort);
+					System.out.println("Test3");
                     Socket dataSocket = welcomeSocket.accept();
                     InputStream inStream = dataSocket.getInputStream();
                     OutputStream outStream = dataSocket.getOutputStream();
@@ -95,46 +98,41 @@ public class Game_Client{
                     // since we don't have "commands" like in the last project
                     // we will want to do a big while loop that the game stuff runs in instead
                     do {
-                      /* read in and print players hand */
-                      System.out.println("Getting your hand...");
-                      hand = (String[])objectIn.readObject();
-                      int num = 0;
-                      System.out.println("Your hand: ");
-                      for(int i=0; i<MAXIMUM_HAND_SIZE; i++){
-                        num = i+1;
-                        System.out.println(num+". " + hand[i]);
-                      }
+						/* read in and print players hand */
+						System.out.println("Getting your hand...");
+						hand = (String[])objectIn.readObject();
+						int num = 0;
+						System.out.println("Your hand: ");
+						for(int i=0; i<MAXIMUM_HAND_SIZE; i++){
+							num = i+1;
+							System.out.println(num+". " + hand[i]);
+						}
 
-                      /* conditional for if you are tzar or a player */
-                      System.out.println("Getting card tzar...");
-                      cardTzar = scanIn.nextLine();
+						/* conditional for if you are tzar or a player */
+						System.out.println("Getting card tzar...");
+						cardTzar = scanIn.nextLine();
+						
+						/* if you are card tzar */
+						if(cardTzar.equals(username)){
+							System.out.println("You are the card tzar this turn!");
+							System.out.println("Getting your black card...");
+							currentBlackCard = scanIn.nextLine();
+							System.out.println(currentBlackCard);
+							System.out.println("Awaiting submissions...");
 
-                      /* if you are card tzar */
-                      if(cardTzar.equals(username)){
-                        System.out.println("You are the card tzar this turn!");
-                        System.out.println("Getting your black card...");
-                        currentBlackCard = scanIn.nextLine();
-                        System.out.println(currentBlackCard);
-                        System.out.println("Awaiting submissions...");
+						}
+						/* you are playing this turn */
+						else{
+							System.out.println(cardTzar + " is the card tzar this turn");
+							System.out.print("Getting the black card for this turn...");
+							currentBlackCard = scanIn.nextLine();
+							System.out.println(currentBlackCard);
 
-                      }
-                      /* you are playing this turn */
-                      else{
-                        System.out.println(cardTzar + " is the card tzar this turn");
-                        System.out.print("Getting the black card for this turn...");
-                        currentBlackCard = scanIn.nextLine();
-                        System.out.println(currentBlackCard);
-
-                        while(cardSelection<=0 || cardSelection>7){
-                            System.out.println("Submit your white card now");
-                            cardSelection = userEntry.nextInt();
-                        }
-                      }
-
-
-
-
-
+							while(cardSelection<=0 || cardSelection>7){
+								System.out.println("Submit your white card now");
+								cardSelection = userEntry.nextInt();
+							}
+						}
                     } while(true);
                 }
 
